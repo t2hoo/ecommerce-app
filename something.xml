@@ -1,0 +1,102 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="API Gateway with Spring Cloud Data Flow, Kafka, and Microservices" id="0">
+    <mxGraphModel dx="1406" dy="2119" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-9" value="" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="-61.86" y="-54.46" width="267.98" height="130.8" as="geometry" />
+        </mxCell>
+        <mxCell id="clientToGateway" style="entryX=-0.036;entryY=0.526;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="u-4C9-E6vjLR5ljfd1HA-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="60" as="sourcePoint" />
+            <mxPoint x="200" y="60" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gatewayToKafka" style="exitX=0.985;exitY=0.659;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="u-4C9-E6vjLR5ljfd1HA-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340" y="73.65853658536594" as="sourcePoint" />
+            <mxPoint x="639.6094839609484" y="131.8915710529427" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SpringCloudDataFlow" value="Spring Cloud Data Flow on Kubernetes" style="shape=mxgraph.kubernetes.pod;whiteSpace=wrap;html=1;fillColor=#E8DAEF" parent="1" vertex="1">
+          <mxGeometry x="820" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="KafkaToDataFlow" parent="1" target="SpringCloudDataFlow" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720.3905160390516" y="140" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MicroservicesLayer" value="Microservices Layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3" parent="1" vertex="1">
+          <mxGeometry x="20" y="160" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="gatewayToMicroservices" style="exitX=0.102;exitY=0.78;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="u-4C9-E6vjLR5ljfd1HA-1" target="MicroservicesLayer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="220" y="110" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Microservice1" value="Microservice 1" style="shape=mxgraph.azure.container_instances;whiteSpace=wrap;html=1;fillColor=#ABEBC6" parent="1" vertex="1">
+          <mxGeometry x="20" y="280" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Microservice2" value="Microservice 2" style="shape=mxgraph.azure.container_instances;whiteSpace=wrap;html=1;fillColor=#ABEBC6" parent="1" vertex="1">
+          <mxGeometry x="20" y="360" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="MicroservicesLayerToService1" parent="1" source="MicroservicesLayer" target="Microservice1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MicroservicesLayerToService2" parent="1" source="MicroservicesLayer" target="Microservice2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Microservice1ToKafka" parent="1" source="Microservice1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="639.6094839609484" y="151.63794529938764" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Microservice2ToKafka" parent="1" source="Microservice2" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="639.6094839609484" y="157.1146254402761" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SpringBatchJob" value="Spring Batch Job" style="shape=mxgraph.azure.data_lake;whiteSpace=wrap;html=1;fillColor=#D1C4E9" parent="1" vertex="1">
+          <mxGeometry x="1020" y="200" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DataFlowToBatch" parent="1" source="SpringCloudDataFlow" target="SpringBatchJob" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AzurePostgresDB" value="Azure PostgreSQL Database" style="shape=mxgraph.azure.azure_postgresql;whiteSpace=wrap;html=1;fillColor=#AED6F1" parent="1" vertex="1">
+          <mxGeometry x="1020" y="300" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="BatchToDatabase" parent="1" source="SpringBatchJob" target="AzurePostgresDB" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-1" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/app_services/API_Management_Services.svg;" vertex="1" parent="1">
+          <mxGeometry x="300" width="98" height="90.79" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-2" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.azure_active_directory;" vertex="1" parent="1">
+          <mxGeometry x="44.8" y="-100" width="47.5" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-3" value="" style="shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#4495D1;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;shape=mxgraph.veeam.2d.web_ui;" vertex="1" parent="1">
+          <mxGeometry x="18.55" y="15.5" width="100" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-4" value="Entra Id Passwordless Authentication" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="38.55" y="-40" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-5" value="ReactJs UI Client" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="105.5" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-7" value="API Gateway" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="240" y="110" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-11" value="" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Kubernetes.svg;" vertex="1" parent="1">
+          <mxGeometry x="895" y="50" width="50" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-12" value="Azure Evenhub" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="605" y="190" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u-4C9-E6vjLR5ljfd1HA-14" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/iot/Event_Hubs.svg;" vertex="1" parent="1">
+          <mxGeometry x="646.5" y="110" width="67" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
