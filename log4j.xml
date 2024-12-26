@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <!-- Root Logger -->
+    <root>
+        <priority value="info" />
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="APP_INSIGHTS" />
+    </root>
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p %c - %m%n" />
+        </layout>
+    </appender>
+
+    <!-- Application Insights Appender -->
+    <appender name="APP_INSIGHTS" class="com.microsoft.applicationinsights.log4j.v1_2.ApplicationInsightsAppender">
+        <param name="instrumentationKey" value="YOUR_INSTRUMENTATION_KEY" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p %c - %m%n" />
+        </layout>
+    </appender>
+
+</log4j:configuration>
