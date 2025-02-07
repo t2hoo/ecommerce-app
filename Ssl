@@ -1,0 +1,188 @@
+Complete Step-by-Step Guide for Setting Up Mutual SSL (Two-Way SSL) in WebLogic with a Signed Certificate
+
+This guide ensures your SOAP web service is secured using mutual SSL authentication, where:
+	•	You (the service provider) have a server certificate signed by your organization’s CA.
+	•	The consuming team (client) provides their client certificate for authentication.
+	•	Oracle WebLogic is configured to enforce two-way SSL.
+	•	SOAP UI is used to test the service locally.
+
+1. Generate Your Server Keystore and CSR (Certificate Signing Request)
+
+Since your certificate must be signed by your organization’s Certificate Authority (CA), follow these steps:
+
+a. Generate the Server Keystore (if not already created)
+
+keytool -genkey -alias myserver \
+  -keyalg RSA \
+  -keystore server-keystore.jks \
+  -dname "CN=yourserver.com, OU=IT, O=YourCompany, L=City, S=State, C=Country" \
+  -storepass changeit \
+  -keypass changeit
+
+	•	CN (Common Name) should be your server’s domain name (e.g., yourserver.com).
+	•	Use strong passwords in production.
+
+b. Generate the CSR (Certificate Signing Request)
+
+keytool -certreq -alias myserver \
+  -keystore server-keystore.jks \
+  -file myserver.csr \
+  -storepass changeit
+
+	•	This file (myserver.csr) must be sent to your organization’s CA for signing.
+
+c. Import the Signed Certificate (Returned by the CA)
+
+Once your organization’s CA signs your CSR, they will return your signed certificate (e.g., myserver_signed.cer) along with a root CA certificate (e.g., org-ca.cer).
+	1.	Import the root CA certificate first:
+
+keytool -import -alias org-ca \
+  -file org-ca.cer \
+  -keystore server-keystore.jks \
+  -storepass changeit
+
+
+	2.	Import your signed certificate into the keystore:
+
+keytool -import -alias myserver \
+  -file myserver_signed.cer \
+  -keystore server-keystore.jks \
+  -storepass changeit
+
+2. Prepare the Truststore (to Trust the Client Certificate)
+
+The consuming team will provide their public certificate (dp.cer). You need to import it into a truststore that WebLogic will use.
+
+a. Create a New Truststore and Import the Client Certificate
+
+keytool -import -alias dp-client \
+  -file dp.cer \
+  -keystore server-truststore.jks \
+  -storepass changeit
+
+3. Configure WebLogic for Mutual SSL Authentication
+
+Now, configure WebLogic Server to use the keystore and truststore.
+
+a. Set Up Custom Keystores
+	1.	Log in to WebLogic Admin Console.
+	2.	Navigate to Servers → Your Server (e.g., AdminServer).
+	3.	Click on Configuration → Keystores and set:
+	•	Keystores: → Custom Identity and Custom Trust
+	•	Custom Identity Keystore: → server-keystore.jks
+	•	Custom Identity Keystore Passphrase: → changeit
+	•	Custom Trust Keystore: → server-truststore.jks
+	•	Custom Trust Keystore Passphrase: → changeit
+	4.	Click Save.
+
+b. Configure SSL Settings
+	1.	Go to the SSL tab.
+	2.	Enable SSL and Two-Way SSL:
+	•	Two Way Client Cert Behavior: → Client Certs Requested and Enforced
+	•	Private Key Alias: → myserver
+	•	Private Key Passphrase: → changeit
+	3.	Click Save and Restart WebLogic.
+
+4. Deploy and Secure Your SOAP Web Service
+
+a. Implement a Basic SOAP Service in Java
+
+Your SOAP web service does not need to handle SSL—WebLogic takes care of that. However, you can retrieve the client certificate if needed.
+
+import javax.jws.WebService;
+import javax.jws.WebMethod;
+import javax.xml.ws.WebServiceContext;
+import javax.annotation.Resource;
+import javax.xml.ws.handler.MessageContext;
+import javax.servlet.http.HttpServletRequest;
+import java.security.cert.X509Certificate;
+
+@WebService
+public class SecureSoapService {
+
+    @Resource
+    private WebServiceContext wsContext;
+
+    @WebMethod
+    public String secureMessage(String input) {
+        // Retrieve the client certificate if needed
+        MessageContext msgCtx = wsContext.getMessageContext();
+        HttpServletRequest request = (HttpServletRequest) msgCtx.get(MessageContext.SERVLET_REQUEST);
+        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+
+        if (certs != null && certs.length > 0) {
+            System.out.println("Client Certificate Subject: " + certs[0].getSubjectDN());
+        }
+
+        return "Hello, secure world: " + input;
+    }
+}
+
+b. Deploy the EAR/WAR in WebLogic
+	1.	Package your application:
+
+mvn clean package
+
+
+	2.	Deploy the EAR/WAR in WebLogic.
+
+5. Share and Exchange Certificates
+	•	You provide:
+Share myserver_signed.cer with the consuming team so they can trust your server.
+	•	They provide:
+They give you dp.cer, which you have already imported into your truststore.
+
+6. Test with SOAP UI (Using a Client Certificate)
+
+To test mutual SSL from SOAP UI, you must configure it with a client keystore.
+
+a. Create a Test Client Keystore (If Not Provided by the Consuming Team)
+
+If they did not provide a keystore, create one:
+
+keytool -genkey -alias dp \
+  -keyalg RSA \
+  -keystore client-keystore.jks \
+  -dname "CN=TestClient, OU=TestUnit, O=TestOrg, L=TestCity, S=TestState, C=YourCountry" \
+  -storepass changeit \
+  -keypass changeit
+
+Export the public certificate:
+
+keytool -export -alias dp \
+  -keystore client-keystore.jks \
+  -file test-client.cer \
+  -storepass changeit
+
+You can import this certificate into server-truststore.jks for local testing.
+
+b. Configure SOAP UI with the Client Keystore
+	1.	Open SOAP UI.
+	2.	Go to File → Preferences → SSL Settings.
+	3.	Set:
+	•	Keystore: client-keystore.jks
+	•	Keystore Password: changeit
+	4.	Restart SOAP UI.
+
+c. Send a Request
+	•	Use your WebLogic service WSDL.
+	•	Ensure the endpoint is HTTPS (e.g., https://yourserver.com:7002/YourService).
+	•	If everything is configured correctly, WebLogic will accept the request because:
+	•	The client trusts the server certificate (myserver_signed.cer).
+	•	The server trusts the client certificate (dp.cer).
+
+Final Summary
+
+You (Server Side)
+	1.	Generate a keystore and get your server certificate signed by your organization’s CA.
+	2.	Import the signed certificate and root CA into your keystore.
+	3.	Create a truststore and import the client certificate (dp.cer).
+	4.	Configure WebLogic to use the keystore and truststore.
+	5.	Deploy the SOAP Web Service.
+
+Client Side (Consuming Team)
+	1.	They import your signed certificate (myserver_signed.cer) into their truststore.
+	2.	They send their certificate (dp.cer) to you for WebLogic authentication.
+	3.	They configure their client (or SOAP UI) to use their keystore when connecting.
+
+Following these steps ensures secure two-way SSL authentication for your SOAP service in Oracle WebLogic. Let me know if you need clarifications!
