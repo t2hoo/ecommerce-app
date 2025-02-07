@@ -1,0 +1,41 @@
+No, you should not give the other team your .jks file with the password. Instead, follow these best practices:
+
+What You Need to Share with the Other Team
+	1.	Your Server Certificate (.cer or .crt)
+	•	Export your server certificate from your keystore and provide it to them.
+	•	This allows their client to trust your server during the SSL handshake.
+	•	Command to export your server certificate:
+
+keytool -export -alias server -keystore server-keystore.jks -file server-cert.cer
+
+
+	2.	Truststore Setup Instructions (for the consuming team)
+	•	The other team must import your certificate (server-cert.cer) into their truststore:
+
+keytool -import -alias my-server -file server-cert.cer -keystore client-truststore.jks
+
+
+	3.	Client Authentication (Their Certificate)
+	•	Since you are using mutual authentication (two-way SSL), they need to provide their own client certificate.
+	•	Ask them to generate their own keystore and certificate:
+
+keytool -genkey -alias client -keyalg RSA -keystore client-keystore.jks -validity 365
+
+
+	•	They must export their certificate and give it to you:
+
+keytool -export -alias client -keystore client-keystore.jks -file client-cert.cer
+
+
+	•	You then import their certificate into your truststore:
+
+keytool -import -alias client -file client-cert.cer -keystore server-truststore.jks
+
+
+
+What They Should Not Get
+
+❌ Your private key (inside .jks)
+❌ Your keystore password
+
+By following this approach, both parties authenticate each other securely without exposing private keys or passwords.
