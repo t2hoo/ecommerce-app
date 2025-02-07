@@ -1,0 +1,130 @@
+To secure your SOAP web service in Oracle WebLogic using certificate-based authentication, follow these steps:
+
+1. Set Up WebLogic for SSL
+
+Since you need certificate-based authentication, you’ll use two-way SSL (mutual authentication).
+
+Step 1: Generate Keystore and Certificates
+
+Use the Java keytool to generate a keystore and truststore.
+
+Generate a Keystore for WebLogic (Server)
+
+keytool -genkey -alias server -keyalg RSA -keystore server-keystore.jks -validity 365
+
+	•	Provide details and set a strong password.
+
+Export the Server Certificate
+
+keytool -export -alias server -keystore server-keystore.jks -file server-cert.cer
+
+Create a Truststore for the Client
+
+keytool -import -alias server -file server-cert.cer -keystore client-truststore.jks
+
+Generate a Keystore for the Client
+
+keytool -genkey -alias client -keyalg RSA -keystore client-keystore.jks -validity 365
+
+Export the Client Certificate
+
+keytool -export -alias client -keystore client-keystore.jks -file client-cert.cer
+
+Import the Client Certificate into the Server Truststore
+
+keytool -import -alias client -file client-cert.cer -keystore server-truststore.jks
+
+2. Configure WebLogic to Use SSL
+
+Step 2: Enable SSL in WebLogic
+	1.	Go to WebLogic Admin Console → Servers → Select your server.
+	2.	Navigate to Keystores:
+	•	Set Keystore Type: Custom Identity and Custom Trust
+	•	Custom Identity Keystore: server-keystore.jks
+	•	Custom Trust Keystore: server-truststore.jks
+	•	Provide passwords.
+	3.	Navigate to SSL tab:
+	•	Enable SSL.
+	•	Set Two-Way Client Cert Behavior to “Client Certs Requested and Enforced”.
+	•	Set Private Key Alias: server
+	•	Set Passphrase.
+
+Step 3: Restart WebLogic Server
+
+After saving the changes, restart the server.
+
+3. Secure the SOAP Web Service
+
+Modify your web.xml and weblogic.xml to enforce client certificate authentication.
+
+web.xml
+
+<web-app>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>SecureSOAPService</web-resource-name>
+            <url-pattern>/secure/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>client</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+</web-app>
+
+weblogic.xml
+
+<weblogic-web-app>
+    <security-role-assignment>
+        <role-name>client</role-name>
+        <principal-name>cert_auth_user</principal-name>
+    </security-role-assignment>
+</weblogic-web-app>
+
+4. Develop and Deploy the Secure SOAP Web Service
+
+Step 4: Implement the Java SOAP Web Service
+
+Use JAX-WS to expose a secure SOAP service.
+
+SOAP Web Service Example
+
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+import javax.xml.ws.BindingType;
+import javax.xml.ws.soap.Addressing;
+import javax.xml.ws.soap.SOAPBinding;
+
+@WebService
+@BindingType(SOAPBinding.SOAP12HTTP_BINDING)
+@Addressing
+public class SecureSoapService {
+    
+    @WebMethod
+    public String secureMessage(String message) {
+        return "Secure Response: " + message;
+    }
+}
+
+5. Deploy and Test the Web Service
+
+Deploy the EAR in WebLogic
+	1.	Package as an EAR:
+
+mvn clean package
+
+
+	2.	Deploy in WebLogic.
+
+Test with SOAP UI (Client Certificate Required)
+	1.	Import client-keystore.jks into SOAP UI.
+	2.	Send a request; it should work only if the client certificate is valid.
+
+Summary
+	•	Configured WebLogic for two-way SSL.
+	•	Secured the SOAP web service with certificate authentication.
+	•	Deployed and tested the service.
+
+Let me know if you need help with any step!
