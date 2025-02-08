@@ -1,0 +1,203 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Accounts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            align-items: flex-start;
+        }
+        .label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        .table-container {
+            width: 60%;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+        }
+        th {
+            background-color: #f2f2f2;
+            user-select: none;
+        }
+        .selected {
+            background-color: #cce5ff !important;
+        }
+        /* Context menu styling */
+        #contextMenu {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        #contextMenu button {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #contextMenu button:hover {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let selectedRows = new Set();
+            let contextMenu = document.getElementById("contextMenu");
+            let serviceTable = document.getElementById("serviceTable");
+            
+            // --- Sorting Logic ---
+            document.querySelectorAll("#serviceTable th").forEach((header, columnIndex) => {
+                header.addEventListener("click", () => {
+                    let tableBody = document.querySelector("#serviceTable tbody");
+                    let rows = Array.from(tableBody.rows);
+                    let isAscending = header.dataset.order !== "asc";
+                    rows.sort((rowA, rowB) => {
+                        let cellA = rowA.cells[columnIndex].textContent.trim();
+                        let cellB = rowB.cells[columnIndex].textContent.trim();
+                        return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                    });
+                    header.dataset.order = isAscending ? "asc" : "desc";
+                    rows.forEach(row => tableBody.appendChild(row)); // reorder rows
+                });
+            });
+            
+            // --- Row Selection (for submission) ---
+            serviceTable.querySelectorAll("tbody tr").forEach(row => {
+                row.addEventListener("click", function () {
+                    let checkbox = this.querySelector("input[type='checkbox']");
+                    if (selectedRows.has(this)) {
+                        selectedRows.delete(this);
+                        this.classList.remove("selected");
+                        checkbox.checked = false;
+                    } else {
+                        selectedRows.add(this);
+                        this.classList.add("selected");
+                        checkbox.checked = true;
+                    }
+                });
+            });
+            
+            // --- Right-Click Context Menu ---
+            document.querySelector(".table-container").addEventListener("contextmenu", function (e) {
+                e.preventDefault();
+                // Position the menu exactly where the mouse is clicked
+                contextMenu.style.display = "block";
+                contextMenu.style.left = e.pageX + "px";
+                contextMenu.style.top = e.pageY + "px";
+            });
+            
+            // Hide the context menu when clicking elsewhere
+            document.addEventListener("click", function (e) {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.style.display = "none";
+                }
+            });
+            
+            // --- CSV Export Functionality ---
+            document.getElementById("exportBtn").addEventListener("click", function () {
+                exportToCSV();
+            });
+            
+            function exportToCSV() {
+                let csv = [];
+                // Get all table rows (headers + data)
+                let rows = document.querySelectorAll("#serviceTable tr");
+                rows.forEach(row => {
+                    let cols = row.querySelectorAll("th, td");
+                    let rowData = [];
+                    cols.forEach(col => {
+                        // If a cell contains a hidden checkbox, ignore it and use the remaining text.
+                        let text = col.innerText;
+                        // Clean the text (remove line breaks, commas, etc.)
+                        text = text.replace(/\n/g, " ").replace(/,/g, " ");
+                        rowData.push('"' + text.trim() + '"');
+                    });
+                    csv.push(rowData.join(","));
+                });
+                let csvString = csv.join("\n");
+                let blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+                let link = document.createElement("a");
+                if (link.download !== undefined) { // feature detection
+                    let url = URL.createObjectURL(blob);
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", "Service_Accounts.csv");
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="label">Service Accounts</div>
+        <div class="table-container">
+            <!-- The form tag wraps only the table; the submit button is omitted for external placement -->
+            <form action="processSelection.jsp" method="post">
+                <table id="serviceTable">
+                    <thead>
+                        <tr>
+                            <th data-order="">SAN LIST</th>
+                            <th data-order="">SAN Status</th>
+                            <th data-order="">SA Alias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%
+                            String[] statuses = {"A", "I", "O"}; // Example statuses
+                            // Array of mock SA Alias values for sorting test
+                            String[] aliases = {"Alpha", "Beta", "Gamma", "Delta", "Epsilon"};
+                            for (int i = 1; i <= 30; i++) {
+                                String sanList = "8xxxxxx" + i;
+                                String status = statuses[i % statuses.length];
+                                String alias = aliases[(i - 1) % aliases.length];
+                        %>
+                        <tr>
+                            <td>
+                                <!-- Hidden checkbox to mark selection; the label (SAN LIST) is also displayed -->
+                                <input type="checkbox" name="selectedSAN" value="<%= sanList %>" hidden> 
+                                <%= sanList %>
+                            </td>
+                            <td><%= status %></td>
+                            <td><%= alias %></td>
+                        </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+                <!-- The submit button is intentionally omitted for placement outside this box -->
+            </form>
+        </div>
+    </div>
+    
+    <!-- Context menu that pops up on right-click -->
+    <div id="contextMenu">
+        <button id="exportBtn">Export to CSV</button>
+    </div>
+</body>
+</html>
