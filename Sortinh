@@ -1,0 +1,40 @@
+document.querySelectorAll("#serviceTable th").forEach((header) => {
+  header.addEventListener("click", () => {
+    let tableBody = document.querySelector("#serviceTable tbody");
+    let rows = Array.from(tableBody.rows);
+    let columnIndex = parseInt(header.dataset.index);
+    let isAscending = header.dataset.order !== "asc";
+
+    rows.sort((rowA, rowB) => {
+      let cellA = rowA.cells[columnIndex].textContent.trim();
+      let cellB = rowB.cells[columnIndex].textContent.trim();
+      return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+    });
+
+    header.dataset.order = isAscending ? "asc" : "desc";
+
+    rows.forEach(row => tableBody.appendChild(row));
+
+    // --- Update Sort Indicator (Font Awesome) ---
+    let indicator = header.querySelector(".sort-indicator");
+
+    // Remove previous Font Awesome classes
+    indicator.classList.remove("fa-sort-up", "fa-sort-down"); // Remove both
+
+    if (isAscending) {
+      indicator.classList.add("fa-sort-up"); // Add up arrow
+    } else {
+      indicator.classList.add("fa-sort-down"); // Add down arrow
+    }
+
+    // --- Reset other indicators ---
+    document.querySelectorAll("#serviceTable th").forEach(otherHeader => {
+      if (otherHeader !== header) {
+        let otherIndicator = otherHeader.querySelector(".sort-indicator");
+        otherIndicator.classList.remove("fa-sort-up", "fa-sort-down"); // Remove both
+      }
+    });
+  });
+});
+
+// ... rest of your JavaScript code ...
