@@ -1,0 +1,175 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Accounts</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            align-items: flex-start;
+        }
+        .label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        .table-container {
+            width: 60%;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+        }
+        th {
+            background-color: #f2f2f2;
+            user-select: none;
+        }
+        .selected {
+            background-color: #cce5ff !important;
+        }
+        #contextMenu {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        #contextMenu button {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #contextMenu button:hover {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let selectedRows = new Set();
+            let contextMenu = document.getElementById("contextMenu");
+            let serviceTable = document.getElementById("serviceTable");
+            
+            // Sorting Logic
+            document.querySelectorAll("#serviceTable th").forEach((header, columnIndex) => {
+                header.addEventListener("click", () => {
+                    let tableBody = document.querySelector("#serviceTable tbody");
+                    let rows = Array.from(tableBody.rows);
+                    let isAscending = header.dataset.order !== "asc";
+
+                    rows.sort((rowA, rowB) => {
+                        let cellA = rowA.cells[columnIndex].textContent.trim();
+                        let cellB = rowB.cells[columnIndex].textContent.trim();
+                        return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                    });
+
+                    header.dataset.order = isAscending ? "asc" : "desc";
+                    rows.forEach(row => tableBody.appendChild(row)); // Reorder rows
+                });
+            });
+
+            // Handle row selection for submission
+            serviceTable.querySelectorAll("tbody tr").forEach(row => {
+                row.addEventListener("click", function () {
+                    let checkbox = this.querySelector("input[type='checkbox']");
+                    if (selectedRows.has(this)) {
+                        selectedRows.delete(this);
+                        this.classList.remove("selected");
+                        checkbox.checked = false;
+                    } else {
+                        selectedRows.add(this);
+                        this.classList.add("selected");
+                        checkbox.checked = true;
+                    }
+                });
+            });
+
+            // Show context menu at mouse position
+            document.querySelector(".table-container").addEventListener("contextmenu", function (e) {
+                e.preventDefault();
+                contextMenu.style.display = "block";
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.style.top = `${e.clientY}px`;
+            });
+
+            // Hide context menu on click elsewhere
+            document.addEventListener("click", function () {
+                contextMenu.style.display = "none";
+            });
+
+            document.getElementById("exportBtn").addEventListener("click", function () {
+                exportToExcel();
+            });
+
+            function exportToExcel() {
+                let wb = XLSX.utils.book_new();
+                let ws = XLSX.utils.table_to_sheet(serviceTable);
+                XLSX.utils.book_append_sheet(wb, ws, "Service_Accounts");
+
+                XLSX.writeFile(wb, "Service_Accounts.xlsx");
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="label">Service Accounts</div>
+
+        <div class="table-container">
+            <form action="processSelection.jsp" method="post">
+                <table id="serviceTable">
+                    <thead>
+                        <tr>
+                            <th data-order="">SAN LIST</th>
+                            <th data-order="">SAN Status</th>
+                            <th data-order="">SA Alias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%
+                            String[] statuses = {"A", "I", "O"}; // Active, Inactive, Other
+                            for (int i = 1; i <= 30; i++) {
+                                String sanList = "8xxxxxx" + i;
+                                String status = statuses[i % 3];
+                                String alias = "xx";
+                        %>
+                        <tr>
+                            <td><input type="checkbox" name="selectedSAN" value="<%= sanList %>" hidden> <%= sanList %></td>
+                            <td><%= status %></td>
+                            <td><%= alias %></td>
+                        </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+                <br>
+                <input type="submit" value="Submit Selected">
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu">
+        <button id="exportBtn">Export to Excel</button>
+    </div>
+
+</body>
+</html>
