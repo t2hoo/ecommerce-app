@@ -1,0 +1,28 @@
+#exportBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    position: fixed; /* Fix the button in place */
+    top: 10px; /* Distance from top */
+    right: 10px; /* Distance from right */
+    z-index: 1001; /* Make sure the button appears above other elements */
+}
+
+#exportBtn i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+#exportBtn:hover {
+    background: #218838;
+}
