@@ -1,0 +1,19 @@
+let mouseX = e.pageX;
+let mouseY = e.pageY;
+
+let menuWidth = contextMenu.offsetWidth;
+let menuHeight = contextMenu.offsetHeight;
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
+
+// Prevent menu from going off-screen
+if (mouseX + menuWidth > windowWidth) {
+    mouseX -= menuWidth;
+}
+if (mouseY + menuHeight > windowHeight) {
+    mouseY -= menuHeight;
+}
+
+contextMenu.style.left = mouseX + "px";
+contextMenu.style.top = mouseY + "px";
+contextMenu.style.display = "block";
