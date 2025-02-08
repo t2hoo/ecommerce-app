@@ -1,0 +1,10 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<button id="exportBtn">
+    <i class="fas fa-file-csv"></i> Export to CSV
+</button>
+
+
+#exportBtn i {
+    margin-right: 5px;
+}
+
