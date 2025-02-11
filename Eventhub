@@ -1,0 +1,59 @@
+Here’s a simple Java code to test the Azure Event Hub connection without Maven:
+
+Steps to Run on Your Azure VM
+	1.	Download the required JARs from Azure SDK for Java
+	•	Required JARs:
+	•	azure-messaging-eventhubs-5.15.2.jar
+	•	azure-core-1.39.0.jar
+	•	azure-messaging-eventhubs-checkpointstore-blob-1.17.0.jar
+	•	reactor-core-3.5.8.jar
+	2.	Save the following Java file as EventHubTest.java
+
+Simple Java Code (No Maven)
+
+import com.azure.messaging.eventhubs.*;
+
+public class EventHubTest {
+    public static void main(String[] args) {
+        String connectionString = "Endpoint=sb://<NAMESPACE>.servicebus.windows.net/;SharedAccessKeyName=<KEY_NAME>;SharedAccessKey=<KEY>";
+        String eventHubName = "<EVENTHUB_NAME>";
+
+        try {
+            EventHubProducerClient producer = new EventHubClientBuilder()
+                .connectionString(connectionString, eventHubName)
+                .buildProducerClient();
+
+            System.out.println("Successfully connected to Event Hub: " + eventHubName);
+
+            EventDataBatch batch = producer.createBatch();
+            batch.tryAdd(new EventData("Test message from Azure VM"));
+            producer.send(batch);
+
+            System.out.println("Test message sent successfully!");
+            producer.close();
+        } catch (Exception e) {
+            System.err.println("Error connecting to Event Hub: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+
+How to Compile and Run
+	1.	Place all JARs in the same folder as EventHubTest.java
+	2.	Compile the Java file:
+
+javac -cp ".:azure-messaging-eventhubs-5.15.2.jar:azure-core-1.39.0.jar:reactor-core-3.5.8.jar" EventHubTest.java
+
+
+	3.	Run the Java program:
+
+java -cp ".:azure-messaging-eventhubs-5.15.2.jar:azure-core-1.39.0.jar:reactor-core-3.5.8.jar" EventHubTest
+
+Expected Output
+
+If everything is working correctly, you should see:
+
+Successfully connected to Event Hub: <EVENTHUB_NAME>
+Test message sent successfully!
+
+If there’s an error, copy the message here, and I’ll help troubleshoot.
