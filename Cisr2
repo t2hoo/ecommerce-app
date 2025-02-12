@@ -1,0 +1,112 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*, java.io.*, javax.servlet.http.*, java.nio.charset.StandardCharsets" %>
+<%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
+
+<%!
+    // Function to process uploaded CSV file
+    public List<Map<String, String>> processCSV(HttpServletRequest request, HttpSession session) throws Exception {
+        String uploadedFilePath = "";
+        List<Map<String, String>> csvData = new ArrayList<>();
+
+        if (ServletFileUpload.isMultipartContent(request)) {
+            DiskFileItemFactory factory = new DiskFileItemFactory();
+            ServletFileUpload upload = new ServletFileUpload(factory);
+            List<FileItem> items = upload.parseRequest(request);
+
+            for (FileItem item : items) {
+                if (!item.isFormField()) {
+                    uploadedFilePath = item.getName(); // Store file name
+                    InputStream inputStream = item.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                    String line;
+                    String[] headers = null;
+
+                    while ((line = reader.readLine()) != null) {
+                        String[] values = line.split(",");
+                        if (headers == null) {
+                            headers = values; // First row as header
+                        } else {
+                            Map<String, String> row = new HashMap<>();
+                            for (int i = 0; i < headers.length; i++) {
+                                row.put(headers[i], values[i]);
+                            }
+                            csvData.add(row);
+                        }
+                    }
+                    reader.close();
+                }
+            }
+            session.setAttribute("csvData", csvData);
+            session.setAttribute("uploadedFilePath", uploadedFilePath);
+        }
+        return csvData;
+    }
+%>
+
+<%
+    // Call the function when form is submitted
+    List<Map<String, String>> csvData = new ArrayList<>();
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        csvData = processCSV(request, session);
+    }
+
+    // Retrieve file path
+    String filePath = (String) session.getAttribute("uploadedFilePath");
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV and Edit</title>
+    <script>
+        function updateFilePath(input) {
+            document.getElementById('filePath').value = input.value.split("\\").pop();
+        }
+
+        function submitForm() {
+            document.getElementById("uploadForm").submit();
+        }
+    </script>
+</head>
+<body>
+
+    <!-- File Upload Form -->
+    <h2>Upload CSV File</h2>
+    <form id="uploadForm" action="upload.jsp" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" required onchange="updateFilePath(this)">
+        <input type="text" id="filePath" value="<%= filePath != null ? filePath : "" %>" readonly>
+        <button type="button" onclick="submitForm()">Upload CSV</button>
+    </form>
+
+    <!-- Display CSV Data in a Table -->
+    <% if (!csvData.isEmpty()) { %>
+        <h2>Uploaded Data</h2>
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Action</th>
+            </tr>
+            <% for (int i = 0; i < csvData.size(); i++) {
+                Map<String, String> row = csvData.get(i);
+            %>
+            <tr>
+                <td><%= row.get("ID") %></td>
+                <td><%= row.get("Name") %></td>
+                <td><%= row.get("Age") %></td>
+                <td>
+                    <form action="edit.jsp" method="post">
+                        <input type="hidden" name="rowIndex" value="<%= i %>">
+                        <button type="submit">Edit</button>
+                    </form>
+                </td>
+            </tr>
+            <% } %>
+        </table>
+    <% } %>
+
+</body>
+</html>
