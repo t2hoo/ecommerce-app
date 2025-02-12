@@ -1,0 +1,123 @@
+If you want the uploaded CSV data to be displayed on the same page (upload.jsp) without redirecting to another page, and also show the uploaded file path in an input field, follow these modifications:
+
+Updated upload.jsp
+	1.	The file input field will display the uploaded file path.
+	2.	Once the CSV is uploaded, it will show the data on the same page.
+	3.	An “Edit” button will be present in each row.
+
+Complete Code (upload.jsp)
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*, java.io.*, javax.servlet.http.*, java.nio.charset.StandardCharsets" %>
+<%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
+
+<%
+    // Check if a file is uploaded
+    String uploadedFilePath = "";
+    if (ServletFileUpload.isMultipartContent(request)) {
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        List<FileItem> items = upload.parseRequest(request);
+        List<Map<String, String>> csvData = new ArrayList<>();
+
+        for (FileItem item : items) {
+            if (!item.isFormField()) {
+                uploadedFilePath = item.getName(); // Get uploaded file name
+                InputStream inputStream = item.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String line;
+                String[] headers = null;
+
+                while ((line = reader.readLine()) != null) {
+                    String[] values = line.split(",");
+                    if (headers == null) {
+                        headers = values; // First row as header
+                    } else {
+                        Map<String, String> row = new HashMap<>();
+                        for (int i = 0; i < headers.length; i++) {
+                            row.put(headers[i], values[i]);
+                        }
+                        csvData.add(row);
+                    }
+                }
+                reader.close();
+            }
+        }
+        session.setAttribute("csvData", csvData);
+        session.setAttribute("uploadedFilePath", uploadedFilePath);
+    }
+
+    // Retrieve stored data from session
+    List<Map<String, String>> csvData = (List<Map<String, String>>) session.getAttribute("csvData");
+    if (csvData == null) {
+        csvData = new ArrayList<>();
+    }
+
+    // Retrieve file path
+    String filePath = (String) session.getAttribute("uploadedFilePath");
+%>
+
+<!-- File Upload Form -->
+<form action="upload.jsp" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput" required onchange="updateFilePath(this)">
+    <input type="text" id="filePath" value="<%= filePath != null ? filePath : "" %>" readonly>
+    <button type="submit">Upload CSV</button>
+</form>
+
+<script>
+    function updateFilePath(input) {
+        document.getElementById('filePath').value = input.value.split("\\").pop();
+    }
+</script>
+
+<!-- Display CSV Data in a Table -->
+<% if (!csvData.isEmpty()) { %>
+    <h2>Uploaded Data</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Action</th>
+        </tr>
+        <% for (int i = 0; i < csvData.size(); i++) {
+            Map<String, String> row = csvData.get(i);
+        %>
+        <tr>
+            <td><%= row.get("ID") %></td>
+            <td><%= row.get("Name") %></td>
+            <td><%= row.get("Age") %></td>
+            <td>
+                <form action="edit.jsp" method="post">
+                    <input type="hidden" name="rowIndex" value="<%= i %>">
+                    <button type="submit">Edit</button>
+                </form>
+            </td>
+        </tr>
+        <% } %>
+    </table>
+<% } %>
+
+Key Enhancements
+
+✅ File Path Display:
+	•	Once a file is selected, its name is shown in a read-only input field.
+
+✅ Data Display on Same Page:
+	•	No redirection happens; once uploaded, data appears on the same page.
+
+✅ Session Storage:
+	•	The uploaded file’s content is stored in the session, so data remains when reloading the page.
+
+Editing a Row (edit.jsp)
+
+This remains unchanged from the previous version.
+
+Final Workflow
+	1.	Upload a CSV file → File path appears in input.
+	2.	Data appears on the same page in a table.
+	3.	Clicking “Edit” on a row redirects to edit.jsp with pre-filled details.
+	4.	After submitting the edit form, it saves to the database and removes the row from the session.
+	5.	Redirects back to upload.jsp, where the edited row is removed, but other rows remain.
+
+Would you like any further enhancements, such as AJAX to handle file uploads without reloading?
