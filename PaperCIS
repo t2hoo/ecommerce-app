@@ -1,0 +1,163 @@
+To achieve this functionality in JSP, you need to follow these steps:
+
+Steps to Implement
+	1.	Upload CSV File: Create a JSP form to upload the CSV file.
+	2.	Read CSV File and Store in Session: Parse the CSV file and store its data in an ArrayList<HashMap<String, String>> in the session.
+	3.	Display Data in a Table: Iterate over the session-stored list and show each row with an “Edit” button.
+	4.	Edit Row Data: Clicking on the “Edit” button redirects to another JSP page with prefilled details.
+	5.	Submit Data to Database: After editing, the data is saved to the database.
+	6.	Remove Processed Row from Session: Remove the edited row from the session and redirect back to the listing page.
+
+1. JSP Page to Upload CSV (upload.jsp)
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*, java.io.*, javax.servlet.http.*, java.nio.charset.StandardCharsets" %>
+<%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
+
+<%
+    if (ServletFileUpload.isMultipartContent(request)) {
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        List<FileItem> items = upload.parseRequest(request);
+        List<Map<String, String>> csvData = new ArrayList<>();
+
+        for (FileItem item : items) {
+            if (!item.isFormField()) {
+                InputStream inputStream = item.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String line;
+                String[] headers = null;
+
+                while ((line = reader.readLine()) != null) {
+                    String[] values = line.split(",");
+                    if (headers == null) {
+                        headers = values; // First row as header
+                    } else {
+                        Map<String, String> row = new HashMap<>();
+                        for (int i = 0; i < headers.length; i++) {
+                            row.put(headers[i], values[i]);
+                        }
+                        csvData.add(row);
+                    }
+                }
+                reader.close();
+            }
+        }
+        session.setAttribute("csvData", csvData);
+        response.sendRedirect("view.jsp");
+    }
+%>
+
+<form action="upload.jsp" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">Upload CSV</button>
+</form>
+
+2. JSP Page to Display Data (view.jsp)
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*" %>
+
+<%
+    List<Map<String, String>> csvData = (List<Map<String, String>>) session.getAttribute("csvData");
+    if (csvData == null) {
+        csvData = new ArrayList<>();
+    }
+%>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Action</th>
+    </tr>
+    <%
+        for (int i = 0; i < csvData.size(); i++) {
+            Map<String, String> row = csvData.get(i);
+    %>
+    <tr>
+        <td><%= row.get("ID") %></td>
+        <td><%= row.get("Name") %></td>
+        <td><%= row.get("Age") %></td>
+        <td>
+            <form action="edit.jsp" method="post">
+                <input type="hidden" name="rowIndex" value="<%= i %>">
+                <button type="submit">Edit</button>
+            </form>
+        </td>
+    </tr>
+    <%
+        }
+    %>
+</table>
+
+3. Edit Page (edit.jsp)
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*" %>
+
+<%
+    int rowIndex = Integer.parseInt(request.getParameter("rowIndex"));
+    List<Map<String, String>> csvData = (List<Map<String, String>>) session.getAttribute("csvData");
+    Map<String, String> row = csvData.get(rowIndex);
+%>
+
+<form action="save.jsp" method="post">
+    <input type="hidden" name="rowIndex" value="<%= rowIndex %>">
+    ID: <input type="text" name="ID" value="<%= row.get("ID") %>" readonly><br>
+    Name: <input type="text" name="Name" value="<%= row.get("Name") %>"><br>
+    Age: <input type="text" name="Age" value="<%= row.get("Age") %>"><br>
+    <button type="submit">Save</button>
+</form>
+
+4. Save to Database (save.jsp)
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%
+    int rowIndex = Integer.parseInt(request.getParameter("rowIndex"));
+    String id = request.getParameter("ID");
+    String name = request.getParameter("Name");
+    String age = request.getParameter("Age");
+
+    // Database connection (Update with your DB credentials)
+    String jdbcURL = "jdbc:mysql://localhost:3306/yourdatabase";
+    String dbUser = "root";
+    String dbPass = "password";
+
+    Class.forName("com.mysql.jdbc.Driver");
+    Connection conn = DriverManager.getConnection(jdbcURL, dbUser, dbPass);
+    PreparedStatement ps = conn.prepareStatement("INSERT INTO users (id, name, age) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=?, age=?");
+    ps.setString(1, id);
+    ps.setString(2, name);
+    ps.setString(3, age);
+    ps.setString(4, name);
+    ps.setString(5, age);
+    ps.executeUpdate();
+    conn.close();
+
+    // Remove the submitted row from session
+    List<Map<String, String>> csvData = (List<Map<String, String>>) session.getAttribute("csvData");
+    csvData.remove(rowIndex);
+    session.setAttribute("csvData", csvData);
+
+    // Redirect back to view page
+    response.sendRedirect("view.jsp");
+%>
+
+Workflow Explanation
+	1.	User uploads a CSV file (upload.jsp).
+	2.	CSV content is read, stored in a session, and displayed in a table (view.jsp).
+	3.	Each row has an “Edit” button that redirects to edit.jsp with pre-filled details.
+	4.	The user modifies the data and submits it (save.jsp).
+	5.	The modified data is saved to the database.
+	6.	The row is removed from the session and the user is redirected back to view.jsp, where only unprocessed rows remain.
+
+Enhancements
+	•	Add error handling and validation.
+	•	Use AJAX to prevent full-page reloads.
+	•	Improve security by sanitizing input.
+
+Would you like help integrating AJAX for a smoother user experience?
