@@ -1,0 +1,115 @@
+It looks like you want to upload a CSV file, parse its data, and then display it in a Dojo EnhancedGrid.
+
+Here’s a step-by-step breakdown to achieve this:
+
+1. Upload CSV and Parse Data in JSP
+
+Modify your upload.jsp to process the CSV file and store its data in a format that Dojo can use.
+
+JSP Code for File Upload & Parsing
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*, java.io.*, javax.servlet.http.*, java.nio.charset.StandardCharsets" %>
+<%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
+
+<%
+    List<Map<String, String>> csvData = new ArrayList<>();
+    String uploadedFilePath = "";
+
+    if (ServletFileUpload.isMultipartContent(request)) {
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        List<FileItem> items = upload.parseRequest(request);
+
+        for (FileItem item : items) {
+            if (!item.isFormField()) {
+                uploadedFilePath = item.getName();
+                InputStream inputStream = item.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                String line;
+                String[] headers = null;
+
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty()) continue;
+
+                    String[] values = line.split(",");
+                    if (headers == null) {
+                        headers = values; // First row as headers
+                    } else {
+                        Map<String, String> row = new HashMap<>();
+                        for (int i = 0; i < headers.length; i++) {
+                            row.put(headers[i], values.length > i ? values[i] : ""); // Handle missing values
+                        }
+                        csvData.add(row);
+                    }
+                }
+                reader.close();
+            }
+        }
+        session.setAttribute("csvData", csvData);
+        session.setAttribute("uploadedFilePath", uploadedFilePath);
+    }
+%>
+
+2. Send Data to JavaScript for Dojo Grid
+
+Modify your upload.jsp to pass the CSV data as JSON to JavaScript.
+
+Inside <script> in upload.jsp
+
+<script>
+    var gridData = <%= new org.json.JSONArray(csvData).toString() %>;
+
+    require(["dojo/ready", "dojo/store/Memory", "dojox/grid/EnhancedGrid", "dojo/data/ItemFileWriteStore"], 
+    function(ready, Memory, EnhancedGrid, ItemFileWriteStore) {
+        ready(function() {
+            if (gridData.length > 0) {
+                var dataStore = new ItemFileWriteStore({
+                    data: {
+                        identifier: "ID",
+                        items: gridData
+                    }
+                });
+
+                var grid = new EnhancedGrid({
+                    store: dataStore,
+                    structure: [
+                        { name: "ID", field: "ID", width: "20%" },
+                        { name: "Name", field: "Name", width: "40%" },
+                        { name: "Age", field: "Age", width: "20%" },
+                        { name: "Action", field: "Action", width: "20%", formatter: function() {
+                            return '<button onclick="editRow()">Edit</button>';
+                        }}
+                    ]
+                }, "gridDiv");
+
+                grid.startup();
+            }
+        });
+    });
+
+    function editRow() {
+        alert("Edit functionality to be implemented.");
+    }
+</script>
+
+3. Add Grid to JSP
+
+Inside <body>, add:
+
+<div id="gridDiv" style="width: 100%; height: 300px;"></div>
+
+Final Workflow
+	1.	User uploads CSV file.
+	2.	JSP parses the CSV and converts it into JSON.
+	3.	Dojo EnhancedGrid loads the data dynamically.
+	4.	Each row has an Edit button to allow further editing.
+
+Expected Grid Output
+
+ID	Name	Age	Action
+101	John	25	[Edit]
+102	Alice	30	[Edit]
+103	Bob	28	[Edit]
+
+This should properly show CSV data in a Dojo grid. Let me know if you need further refinements!
