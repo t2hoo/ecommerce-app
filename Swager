@@ -1,0 +1,118 @@
+To add Swagger UI to your REST API deployed in an EAR file in Oracle WebLogic, you need to integrate Swagger into your project. Typically, Swagger is used for API documentation and can be easily added to a RESTful application, especially if you are using JAX-RS (Java API for RESTful Web Services) or any similar REST framework.
+
+Since you are working with an EAR file, there are a few steps to integrate Swagger:
+
+Steps to Add Swagger UI to Your REST API in WebLogic
+
+Step 1: Add Swagger Dependencies to Your Project
+	1.	If you’re using Maven, add the following dependencies to your pom.xml file (inside the WAR module or the ear module):
+Swagger Core (for JAX-RS based applications):
+
+<dependency>
+    <groupId>io.swagger</groupId>
+    <artifactId>swagger-jersey2-jaxrs</artifactId>
+    <version>1.5.21</version>
+</dependency>
+
+Swagger UI (for the front-end part to display the API docs):
+
+<dependency>
+    <groupId>org.webjars</groupId>
+    <artifactId>swagger-ui</artifactId>
+    <version>3.52.5</version>
+</dependency>
+
+Swagger Core provides the backend for the Swagger API documentation, while Swagger UI will provide the user interface to display the API documentation.
+
+Step 2: Configure Swagger in Your Project
+
+Next, you need to configure Swagger to expose the API documentation. If you’re using JAX-RS, you can integrate it using Swagger2Feature for Jersey or any other JAX-RS implementation.
+	1.	Configure Swagger2Feature (for JAX-RS):
+In your application, create a SwaggerConfig class that will enable Swagger.
+
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
+import org.glassfish.jersey.server.ResourceConfig;
+import javax.ws.rs.ApplicationPath;
+
+@ApplicationPath("/api")
+public class SwaggerConfig extends ResourceConfig {
+    public SwaggerConfig() {
+        // Register the Swagger feature
+        packages("your.rest.api.package");  // Specify the package where your resources are
+
+        // Register Swagger serializers for API documentation
+        register(SwaggerSerializers.class);
+
+        // Configure Swagger API documentation generation
+        BeanConfig beanConfig = new BeanConfig();
+        beanConfig.setTitle("My API");
+        beanConfig.setVersion("1.0.0");
+        beanConfig.setBasePath("/api");  // The base path for your REST services
+        beanConfig.setResourcePackage("your.rest.api.package");  // Where your resources are located
+        beanConfig.setScan(true);
+    }
+}
+
+	•	@ApplicationPath("/api") specifies the root path for your REST API.
+	•	Swagger configuration specifies the title, version, base path, and resource package for your API.
+
+	2.	Define the Swagger UI (Optional):
+You may need to serve Swagger UI (front-end) from a location inside your web application. Typically, Swagger UI is added in the webapp directory of the WAR file. If it’s inside your EAR, place the Swagger UI files inside your WEB-INF or a custom folder.
+You can download the latest version of Swagger UI from the Swagger GitHub repository and add the contents to a folder like src/main/webapp/swagger-ui.
+	3.	Configure your web.xml to serve Swagger UI:
+In your web.xml, configure the path for Swagger UI to serve:
+
+<servlet>
+    <servlet-name>Swagger UI</servlet-name>
+    <servlet-class>org.webjars.servlet.WebJarAssetLocator</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>Swagger UI</servlet-name>
+    <url-pattern>/swagger/*</url-pattern> <!-- Swagger UI accessible at /swagger -->
+</servlet-mapping>
+
+You can also serve Swagger UI directly if you are using WebJars.
+
+Step 3: Update the application.xml or weblogic-application.xml
+
+Make sure your EAR configuration allows proper deployment of the Swagger resources. If you are using WebLogic, you might have already configured the context root in your weblogic-application.xml. Just ensure there’s no conflict with the paths you’ve chosen for your REST API and Swagger UI.
+
+Step 4: Redeploy Your EAR
+
+Once the dependencies are added and the configurations are set, you need to rebuild and redeploy your EAR file.
+	1.	Clean and package your EAR file:
+
+mvn clean package
+
+
+	2.	Redeploy to WebLogic:
+
+mvn weblogic:deploy
+
+Alternatively, you can deploy it manually via the WebLogic console.
+
+Step 5: Access Swagger UI
+
+Once deployed, you can access the Swagger UI through a browser.
+	1.	Swagger API Documentation:
+Your Swagger API documentation should be available at:
+
+http://<your-server>:7001/xyz/api/swagger.json
+
+
+	2.	Swagger UI:
+You can view the Swagger UI (a user-friendly interface to test the API) at:
+
+http://<your-server>:7001/xyz/swagger/
+
+	•	This URL will serve the Swagger UI and allow you to interact with your REST API directly from the browser.
+
+Additional Notes:
+	•	CORS Support: If you’re accessing your Swagger UI from a different domain (like locally or from an external UI), ensure you have configured CORS (Cross-Origin Resource Sharing) in WebLogic if needed. You can add CORS filters in your web.xml or via a filter class.
+	•	Customization: You can customize the Swagger UI or its configuration by modifying the swagger.json and using a custom version of Swagger UI.
+	•	Security: If your API has security, you may want to ensure Swagger can handle authentication (e.g., Basic Auth, OAuth). This can be configured in Swagger UI.
+
+By following these steps, you should be able to integrate Swagger with your REST API deployed in WebLogic through an EAR file and access the API documentation via the Swagger UI.
+
+Let me know if you encounter any issues!
