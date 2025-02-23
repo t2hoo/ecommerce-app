@@ -1,0 +1,123 @@
+If you want to integrate Swagger into your existing JAX-RS application without changing the existing resource classes, you can do that by simply adding a Swagger configuration file that will scan your existing JAX-RS resources and generate the API documentation. This allows you to add Swagger support without modifying your resource classes.
+
+Here’s how you can do that step by step:
+
+Step 1: Add Swagger Dependencies
+
+Ensure you add the necessary Swagger dependencies in your WAR module’s pom.xml file (if not already added).
+
+<dependencies>
+    <!-- Swagger Core for JAX-RS support -->
+    <dependency>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-core</artifactId>
+        <version>1.5.21</version> <!-- Use the latest compatible version -->
+    </dependency>
+    
+    <dependency>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-annotations</artifactId>
+        <version>1.5.21</version> <!-- Same version as above -->
+    </dependency>
+    
+    <!-- Optional: Swagger UI -->
+    <dependency>
+        <groupId>org.webjars</groupId>
+        <artifactId>swagger-ui</artifactId>
+        <version>3.52.5</version> <!-- Use the latest version -->
+    </dependency>
+</dependencies>
+
+Step 2: Add a Swagger Configuration Class
+
+You can add a new configuration class in your project that will initialize Swagger and configure it to scan your JAX-RS resources. This class will be responsible for setting up the API documentation but won’t require any modifications to your existing JAX-RS resource classes.
+	1.	SwaggerConfig Class: This class will initialize Swagger, set up the base path, and scan the package where your JAX-RS resources are located.
+
+import io.swagger.jaxrs.config.BeanConfig;
+
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
+
+@ApplicationPath("/rest") // Base path of your API
+public class SwaggerConfig extends Application {
+
+    public SwaggerConfig() {
+        // Swagger setup
+        BeanConfig beanConfig = new BeanConfig();
+        beanConfig.setVersion("1.0.0"); // Version of your API
+        beanConfig.setBasePath("/rest"); // Base path (adjust according to your setup)
+        beanConfig.setResourcePackage("com.example.resources"); // Package containing your JAX-RS resources
+        beanConfig.setScan(true); // Enable scanning
+    }
+}
+
+	•	@ApplicationPath("/rest"): Specifies the base path for your JAX-RS resources. Adjust this according to your project structure.
+	•	BeanConfig: This is where Swagger is configured to scan the JAX-RS resources in the com.example.resources package (replace this with the actual package name containing your resource classes). The setScan(true) enables the scanning of all resources in that package.
+
+Step 3: Expose Swagger JSON and Swagger UI
+	1.	Expose Swagger JSON: You need to configure Swagger to expose the API documentation in JSON format. This can be done by adding a servlet to the web.xml file.
+Add the following servlet configuration to your web.xml:
+
+<servlet>
+    <servlet-name>Swagger Servlet</servlet-name>
+    <servlet-class>io.swagger.jaxrs.listing.ApiListingResource</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>Swagger Servlet</servlet-name>
+    <url-pattern>/swagger.json</url-pattern> <!-- This will serve the Swagger JSON -->
+</servlet-mapping>
+
+This configuration will expose the Swagger JSON documentation at /swagger.json for your application.
+
+	2.	Expose Swagger UI (Optional): If you want to have a web-based UI to interact with your API documentation, you can use Swagger UI.
+Add this to your web.xml to serve Swagger UI (if you haven’t already added the Swagger UI WebJar dependency):
+
+<servlet>
+    <servlet-name>Swagger UI</servlet-name>
+    <servlet-class>org.webjars.servlet.WebJarServlet</servlet-class>
+    <init-param>
+        <param-name>webjars.prefix</param-name>
+        <param-value>/webjars</param-value>
+    </init-param>
+</servlet>
+<servlet-mapping>
+    <servlet-name>Swagger UI</servlet-name>
+    <url-pattern>/swagger-ui/*</url-pattern> <!-- This will serve Swagger UI -->
+</servlet-mapping>
+
+This configuration maps the Swagger UI to /swagger-ui/, which will allow you to interact with the API documentation in a browser.
+
+Step 4: Build and Deploy
+	1.	Build the Application: Run the following Maven command to build your application:
+
+mvn clean install
+
+
+	2.	Deploy to WebLogic: Deploy your WAR module to WebLogic. You can use the WebLogic Maven plugin for deployment:
+
+mvn weblogic:deploy
+
+
+
+Step 5: Access the Swagger Documentation
+
+Once the application is deployed, you can access:
+	•	Swagger JSON: The Swagger JSON documentation for your APIs should be available at:
+
+http://<weblogic_host>:<port>/your-app-name/swagger.json
+
+
+	•	Swagger UI: The interactive Swagger UI (if configured) will be available at:
+
+http://<weblogic_host>:<port>/your-app-name/swagger-ui/
+
+
+
+Conclusion
+
+By following the steps above, you’ve successfully integrated Swagger into your existing JAX-RS application without changing your existing resource classes.
+	•	You added a Swagger configuration class (SwaggerConfig) to initialize Swagger.
+	•	You exposed the Swagger JSON via a servlet (/swagger.json).
+	•	You optionally configured Swagger UI for an interactive API documentation interface.
+
+Now you have API documentation that can be accessed via Swagger UI and Swagger JSON, all without modifying your existing JAX-RS resources.
