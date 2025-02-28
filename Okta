@@ -1,0 +1,69 @@
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.proc.JWSAlgorithmFamilyJWSKeySelector;
+import com.nimbusds.jose.proc.JWSKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.SignedJWT;
+import java.net.URL;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Date;
+
+public class TokenValidationFilter implements Filter {
+    
+    private static final String OKTA_JWKS_URL = "https://your-okta-domain.com/oauth2/default/v1/keys";
+
+    @Override
+    public void init(FilterConfig filterConfig) {}
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        String authHeader = httpRequest.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid Authorization header");
+            return;
+        }
+
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+
+        try {
+            validateToken(token);
+            chain.doFilter(request, response); // Continue if token is valid
+        } catch (Exception e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void destroy() {}
+
+    // Token Validation Method
+    private void validateToken(String token) throws Exception {
+        SignedJWT jwt = SignedJWT.parse(token);
+
+        // Fetch public key from Okta
+        JWKSet jwkSet = JWKSet.load(new URL(OKTA_JWKS_URL));
+        RSAKey rsaKey = (RSAKey) jwkSet.getKeys().get(0);
+        RSAPublicKey publicKey = rsaKey.toRSAPublicKey();
+
+        // Verify token signature
+        if (!jwt.verify(new com.nimbusds.jose.crypto.RSASSAVerifier(publicKey))) {
+            throw new Exception("Invalid token signature");
+        }
+
+        // Validate expiration
+        if (jwt.getJWTClaimsSet().getExpirationTime().before(new Date())) {
+            throw new Exception("Token has expired");
+        }
+    }
+}
