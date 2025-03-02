@@ -113,3 +113,41 @@ app.on('window-all-closed', () => {
 </body>
 </html>
 
+
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+module.exports = {
+  entry: './src/index.js', // React entry point
+  target: 'electron-renderer', // Ensure Electron compatibility
+  output: {
+    path: path.resolve(__dirname, 'release-builds'),
+    filename: 'bundle.js',
+    publicPath: './', // Important for relative paths in Electron
+  },
+  module: {
+    rules: [
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules/,
+        use: 'babel-loader',
+      },
+      {
+        test: /\.css$/, // Ensure Webpack handles CSS files
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './public/index.html', // Ensure Webpack generates index.html
+      publicPath: './', // Ensures relative paths work in Electron
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'public/styles.css', to: 'styles.css' }, // Copy CSS to the output folder
+      ],
+    }),
+  ],
+};
