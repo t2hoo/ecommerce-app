@@ -1,0 +1,5 @@
+npm init -y  # Initialize package.json if not already done
+npm install --save-dev webpack webpack-cli webpack-dev-server babel-loader @babel/core @babel/preset-env @babel/preset-react style-loader css-loader file-loader electron electron-builder
+npm run build  # Bundle the app using Webpack
+npm run dist   # Package your Electron app and create a .exe
+npm run start-electron  # Start Electron in development mode
