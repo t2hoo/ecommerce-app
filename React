@@ -1,0 +1,305 @@
+npm init -y
+npm install react react-dom electron styled-components @mui/material @mui/icons-material
+
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  });
+
+  win.loadURL('http://localhost:3000'); // Load React App
+}
+
+app.whenReady().then(createWindow);
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+
+
+
+
+import React from 'react';
+import Header from './components/Header';
+import TenantTable from './components/TenantTable';
+import Sidebar from './components/Sidebar';
+import { Container, Content } from './styles';
+
+function App() {
+  return (
+    <Container>
+      <Sidebar />
+      <Content>
+        <Header />
+        <TenantTable />
+      </Content>
+    </Container>
+  );
+}
+
+export default App;
+
+
+
+import React from 'react';
+import { HeaderContainer, Title, Status } from '../styles';
+
+const Header = () => {
+  return (
+    <HeaderContainer>
+      <Title>Building ID: 29470 | 5051 Verdugo Way</Title>
+      <Status>Active</Status>
+    </HeaderContainer>
+  );
+};
+
+export default Header;
+
+
+import React from 'react';
+import { SidebarContainer, MenuItem } from '../styles';
+
+const Sidebar = () => {
+  return (
+    <SidebarContainer>
+      <MenuItem>Filters</MenuItem>
+      <MenuItem>View Input</MenuItem>
+      <MenuItem>View Usage</MenuItem>
+    </SidebarContainer>
+  );
+};
+
+export default Sidebar;
+
+import React from 'react';
+import { Table, TableRow, TableHead, TableCell, TableBody } from '@mui/material';
+
+const TenantTable = () => {
+  const tenants = [
+    { firstName: "LLC", lastName: "ERBEM", csr: "A", cu: "1000344039", sa: "8000421975", svc: "7923275", type: "COM", unit: "STE 310", meter: "256000-135264" },
+    { firstName: "DIGNITY HEALTH", lastName: "FOUNDATION", csr: "A", cu: "1000344039", sa: "8000421975", svc: "7923275", type: "COM", unit: "MAIN", meter: "256000-132534" }
+  ];
+
+  return (
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>First Name</TableCell>
+          <TableCell>Last Name</TableCell>
+          <TableCell>CSR</TableCell>
+          <TableCell>CU</TableCell>
+          <TableCell>SA</TableCell>
+          <TableCell>SVC</TableCell>
+          <TableCell>Type</TableCell>
+          <TableCell>Unit</TableCell>
+          <TableCell>Meter</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {tenants.map((tenant, index) => (
+          <TableRow key={index}>
+            <TableCell>{tenant.firstName}</TableCell>
+            <TableCell>{tenant.lastName}</TableCell>
+            <TableCell>{tenant.csr}</TableCell>
+            <TableCell>{tenant.cu}</TableCell>
+            <TableCell>{tenant.sa}</TableCell>
+            <TableCell>{tenant.svc}</TableCell>
+            <TableCell>{tenant.type}</TableCell>
+            <TableCell>{tenant.unit}</TableCell>
+            <TableCell>{tenant.meter}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
+export default TenantTable;
+
+import styled from 'styled-components';
+
+export const Container = styled.div`
+  display: flex;
+  height: 100vh;
+`;
+
+export const SidebarContainer = styled.div`
+  width: 250px;
+  background: #f0f4f8;
+  padding: 20px;
+`;
+
+export const MenuItem = styled.div`
+  margin: 10px 0;
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover {
+    background: #e0e7ff;
+  }
+`;
+
+export const Content = styled.div`
+  flex: 1;
+  padding: 20px;
+`;
+
+export const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background: #2c7be5;
+  color: white;
+  border-radius: 8px;
+`;
+
+export const Title = styled.h2`
+  margin: 0;
+`;
+
+export const Status = styled.span`
+  background: green;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+`;
+
+
+{
+  "name": "building-app",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "concurrently \"npm run react-start\" \"npm run electron-start\"",
+    "react-start": "react-scripts start",
+    "electron-start": "electron .",
+    "build": "electron-packager . BuildingApp --platform=win32 --arch=x64 --out=dist/"
+  },
+  "dependencies": {
+    "electron": "^24.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "styled-components": "^5.3.3",
+    "@mui/material": "^5.11.3",
+    "@mui/icons-material": "^5.11.3"
+  }
+}
+
+npx create-react-app my-app
+cd my-app
+npm install
+npm install --save-dev electron electron-builder
+npm install electron electron-builder oracledb
+
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const oracledb = require('oracledb');
+
+let mainWindow;
+
+app.whenReady().then(() => {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true, // Allows using Node.js in frontend
+      contextIsolation: false,
+    }
+  });
+
+  mainWindow.loadURL(`file://${path.join(__dirname, 'build', 'index.html')}`);
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+const oracledb = require('oracledb');
+
+const dbConfig = {
+  user: "your_username",
+  password: "your_password",
+  connectString: "your_host:your_port/your_service_name"
+};
+
+async function runQuery(query, params = []) {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbConfig);
+    const result = await connection.execute(query, params, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+    return result.rows;
+  } catch (err) {
+    console.error("OracleDB Error: ", err);
+    return { error: err.message };
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error("Error closing connection: ", err);
+      }
+    }
+  }
+}
+
+module.exports = { runQuery };
+
+const db = require('./database');
+
+ipcMain.handle('get-users', async () => {
+  return await db.runQuery("SELECT * FROM users");
+});
+
+const { ipcRenderer } = window.require('electron');
+
+function App() {
+  const [users, setUsers] = React.useState([]);
+
+  React.useEffect(() => {
+    async function fetchUsers() {
+      const data = await ipcRenderer.invoke('get-users');
+      setUsers(data);
+    }
+
+    fetchUsers();
+  }, []);
+
+  return (
+    <div>
+      <h1>User List</h1>
+      <ul>
+        {users.map((user) => (
+          <li key={user.ID}>{user.NAME} - {user.EMAIL}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+
+"main": "electron.js",
+"scripts": {
+  "start": "react-scripts start",
+  "build": "react-scripts build",
+  "electron": "electron .",
+  "package-win": "electron-builder"
+},
+"build": {
+  "appId": "com.yourapp.id",
+  "win": {
+    "target": "nsis",
+    "icon": "public/icon.ico"
+  }
+}
+
+npm run build
+npm run package-win
+
