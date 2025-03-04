@@ -1,0 +1,25 @@
+<security-constraint>
+    <web-resource-collection>
+        <web-resource-name>SecureSOAPService</web-resource-name>
+        <url-pattern>/YourService</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+        <role-name>soapusers</role-name>
+    </auth-constraint>
+</security-constraint>
+
+<login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>myrealm</realm-name>
+</login-config>
+
+<security-role>
+    <role-name>soapusers</role-name>
+</security-role>
+
+<weblogic-web-app xmlns="http://www.bea.com/ns/weblogic/90">
+    <security-role-assignment>
+        <role-name>soapusers</role-name>
+        <principal-name>wsuser</principal-name>
+    </security-role-assignment>
+</weblogic-web-app>
