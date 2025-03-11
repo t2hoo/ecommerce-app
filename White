@@ -120,3 +120,24 @@ Migrating to Azure Database for PostgreSQL (Flexible Server) unlocks cost saving
 By following best practices in schema migration, query optimization, connection pooling, and high availability configurations, organizations can ensure a seamless and efficient transition to PostgreSQL Flexible Server with minimal downtime and maximum performance.
 
 Would you like a step-by-step migration checklist or detailed PostgreSQL parameter tuning recommendations for Flexible Server?
+
+
+Issue: PostgreSQL follows MVCC (Multi-Version Concurrency Control), unlike other databases that rely on different locking mechanisms.
+	•	Examples:
+	•	SQL Server uses Row-Level Locks and Pessimistic Concurrency by default.
+	•	MySQL (InnoDB) uses both row-level locking and gap locking for transactions.
+	•	PostgreSQL never locks reads (uses MVCC), which can lead to dead tuples and bloat if not vacuumed properly.
+	•	Solution:
+	•	Optimize autovacuum settings to prevent bloat (adjust vacuum_cost_delay and work_mem).
+	•	Use FOR UPDATE SKIP LOCKED or FOR SHARE to prevent unnecessary blocking.
+	•	Monitor deadlocks using pg_locks and pg_stat_activity.
+
+⸻
+
+I. Differences in Transaction Isolation Levels
+	•	Issue: PostgreSQL supports READ COMMITTED (default), REPEATABLE READ, and SERIALIZABLE, which behave differently from other RDBMSs.
+	•	Example:
+	•	SQL Server’s READ UNCOMMITTED (dirty reads) has no direct PostgreSQL equivalent.
+	•	PostgreSQL does not support table-level snapshot isolation like Oracle.
+	•	Solution:
+	•	Review existing transaction isolation levels and match them appropriately.
