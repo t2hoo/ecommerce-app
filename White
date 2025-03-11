@@ -141,3 +141,24 @@ I. Differences in Transaction Isolation Levels
 	•	PostgreSQL does not support table-level snapshot isolation like Oracle.
 	•	Solution:
 	•	Review existing transaction isolation levels and match them appropriately.
+
+
+2. SQL Syntax Differences & Application Refactoring
+	•	Issue: Queries written in MySQL, SQL Server, or Oracle may not work as-is in PostgreSQL due to different SQL syntax.
+	•	Example:
+	•	LIMIT x OFFSET y (PostgreSQL) vs TOP x (SQL Server)
+	•	AUTO_INCREMENT (MySQL) vs SERIAL (PostgreSQL)
+	•	Solution:
+	•	Use tools like Ora2Pg (for Oracle) or pgLoader (for MySQL).
+	•	Refactor application code to accommodate PostgreSQL-specific SQL queries.
+
+3. Stored Procedures & Functions Compatibility
+	•	Issue: PostgreSQL uses PL/pgSQL, whereas other RDBMSs may use T-SQL (SQL Server) or PL/SQL (Oracle).
+	•	Solution: Convert existing stored procedures to PL/pgSQL and test them thoroughly.
+
+4. Performance Optimization Challenges
+	•	Issue: Indexing strategies, query execution plans, and partitioning mechanisms differ between databases.
+	•	Example: PostgreSQL prefers GIN/GiST indexes for full-text search instead of MySQL’s FULLTEXT indexes.
+	•	Solution:
+	•	Analyze slow queries using EXPLAIN ANALYZE.
+	•	Optimize indexing strategies based on PostgreSQL best practices.
