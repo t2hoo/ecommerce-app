@@ -1,0 +1,21 @@
+# Sign in to Azure
+Connect-AzAccount  
+
+# Get all subscriptions  
+$subscriptions = Get-AzSubscription  
+
+# Replace with the group name
+$groupName = "Your-Group-Name"
+
+# Loop through each subscription and check role assignments
+foreach ($sub in $subscriptions) {
+    Set-AzContext -SubscriptionId $sub.Id
+    Write-Host "Checking Subscription: $($sub.Name)"
+
+    $roles = Get-AzRoleAssignment -ObjectType Group -ObjectDisplayName $groupName
+    if ($roles) {
+        $roles | Select-Object DisplayName, RoleDefinitionName, Scope
+    } else {
+        Write-Host "No role assignments found in this subscription."
+    }
+}
