@@ -19,3 +19,28 @@ foreach ($sub in $subscriptions) {
         Write-Host "No role assignments found in this subscription."
     }
 }
+
+
+# Sign in to Azure
+Connect-AzAccount  
+
+# Get all subscriptions  
+$subscriptions = Get-AzSubscription  
+
+# Replace with the group name
+$groupName = "Your-Group-Name"
+
+# Loop through each subscription and check role assignments
+foreach ($sub in $subscriptions) {
+    Set-AzContext -SubscriptionId $sub.Id
+    Write-Host "`nChecking Subscription: $($sub.Name) ($($sub.Id))"
+
+    # Fetch role assignments and filter by group name
+    $roles = Get-AzRoleAssignment | Where-Object { $_.ObjectType -eq "Group" -and $_.DisplayName -eq $groupName }
+
+    if ($roles) {
+        $roles | Select-Object DisplayName, RoleDefinitionName, Scope | Format-Table -AutoSize
+    } else {
+        Write-Host "No role assignments found for this group in this subscription."
+    }
+}
