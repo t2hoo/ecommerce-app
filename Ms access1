@@ -1,0 +1,21 @@
+Function GetNewToken() As String
+    Dim shell As Object
+    Dim exec As Object
+    Dim output As String
+    Dim line As String
+
+    Set shell = CreateObject("WScript.Shell")
+    
+    ' Path to your PowerShell script
+    Dim command As String
+    command = "powershell -ExecutionPolicy Bypass -File ""C:\Path\To\get_pg_token.ps1"""
+
+    Set exec = shell.Exec(command)
+    
+    Do While Not exec.StdOut.AtEndOfStream
+        line = exec.StdOut.ReadLine()
+        output = output & line
+    Loop
+    
+    GetNewToken = Trim(output)
+End Function
