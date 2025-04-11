@@ -1,0 +1,16 @@
+Dim conn As Object
+Set conn = CreateObject("ADODB.Connection")
+
+Dim accessToken As String
+accessToken = GetNewToken() ' Call your token generation method here
+
+Dim connStr As String
+connStr = "Driver={PostgreSQL Unicode(x64)};" & _
+          "Server=yourserver.postgres.database.azure.com;" & _
+          "Port=5432;" & _
+          "Database=yourdb;" & _
+          "UID=youruser@yourserver;" & _
+          "Password=" & accessToken & ";" & _
+          "SSLmode=require;"
+
+conn.Open connStr
